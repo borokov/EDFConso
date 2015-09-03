@@ -15,119 +15,213 @@
   <script type="text/javascript" src="jquery-ui/jquery-ui.min.js"></script>
   <script src="js/highcharts.js"></script>
   <script src="js/modules/exporting.js"></script>
+  <script src="js/modules/data.js"></script>
 
 
   <script type="text/javascript">
 
-DELTA_HOUR = 3600;
-DELTA_DAY = 24 * 3600;
+DELTA_HOUR = 1000 * 3600;
+DELTA_DAY = 24 * DELTA_HOUR;
 DELTA_WEEK = 7 * DELTA_DAY;
 DELTA_MONTH = 30 * DELTA_DAY;
 DELTA_YEAR = 12 * DELTA_MONTH;
+
+MODE_DAY = 1;
+MODE_WEEK = 2;
+MODE_MONTH = 3;
+MODE_YEAR = 4;
+MODE_ALL = 5;
+
+m_selectedMode = MODE_DAY
+m_selectedLastDate = Date.now();
+
+function setMode(mode)
+{
+  m_selectedMode = mode;
+  m_selectedLastDate = Date.now();
+
+  updateChart();
+}
+
+function prev()
+{
+  switch(m_selectedMode)
+  {
+    case MODE_DAY:
+      m_selectedLastDate -= DELTA_DAY;
+      break;
+    case MODE_WEEK:
+      m_selectedLastDate -= DELTA_WEEK;
+      break
+    case MODE_MONTH:
+      m_selectedLastDate -= DELTA_MONTH;
+      break;
+    case MODE_YEAR:
+      m_selectedLastDate -= DELTA_YEAR;
+      break;
+    case MODE_ALL:
+      m_selectedLastDate = Date.now();
+      break;
+  }
+  updateChart();
+}
+
+function next()
+{
+  switch(m_selectedMode)
+  {
+    case MODE_DAY:
+      m_selectedLastDate += DELTA_DAY;
+      break;
+    case MODE_WEEK:
+      m_selectedLastDate += DELTA_WEEK;
+      break
+    case MODE_MONTH:
+        m_selectedLastDate += DELTA_MONTH;
+        break;
+    case MODE_YEAR:
+        m_selectedLastDate += DELTA_YEAR;
+        break;
+    case MODE_ALL:
+        m_selectedLastDate = Date.now();
+        break;
+  }
+  updateChart();
+}
+
+function updateChart()
+{
+  switch(m_selectedMode)
+  {
+    case MODE_DAY:
+      asyncCreateChart(m_selectedLastDate, m_selectedLastDate);
+      break;
+    case MODE_WEEK:
+      asyncCreateChart(m_selectedLastDate - DELTA_WEEK, m_selectedLastDate);
+      break
+    case MODE_MONTH:
+      asyncCreateChart(m_selectedLastDate - DELTA_MONTH, m_selectedLastDate);
+      break;
+    case MODE_YEAR:
+      asyncCreateChart(m_selectedLastDate - DELTA_YEAR, m_selectedLastDate);
+      break;
+    case MODE_ALL:
+      asyncCreateChart(0, m_selectedLastDate);
+      break;
+  }
+}
 
 function createChart(csv)
 {
     $('#container_puissance').highcharts({
         chart: {
-            type: 'spline',
-            zoomType: 'x',
-            panning: true,
-            events: {
-              selection: function (event) {
-                          asyncCreateChart(Math.floor(event.xAxis[0].min/1000), Math.floor(event.xAxis[0].max/1000));
-                          }
-            }
+            type: 'spline'
         },
         title: {
             text: 'Puissance moyenne'
         },
-        subtitle: {
-            text: ''
-        },
-        xAxis: {
-            type: 'datetime',
-            title: {
-                text: 'Date'
-            }
-        },
         yAxis: {
-            title: {
-                text: 'Puissance (W)'
-            },
+            min: 0,
+            max: 1500,
+            startOnTick: false,
+            endOnTick: false
         },
-        tooltip: {
-            headerFormat: '<b>{series.name}</b><br>',
-            pointFormat: '{point.x:%e. %b}: {point.y:.0f} W'
-        },
-
-        series: [{
-            name: 'Consommation HC',
-            // Define the data points. All series have a dummy year
-            // of 1970/71 in order to be compared on the same x axis. Note
-            // that in JavaScript, months start at 0 for January, 1 for February etc.
-            data: csv.data
-        }, {
-            name: 'Consommation HP',
-            data: [
-            ]
-        }]
+        data: {
+           rows: csv
+        }
     });
 };
 
-function asyncCreateChart(minDate, maxDate){
+function asyncCreateChart(minDate, maxDate)
+{
   deltaChart = maxDate - minDate;
   deltaRequest = 0;
   maxRequest = maxDate + 0.2 * deltaRequest;
-  // estimate how many point there will be in chart and adjust delta of request
 
+  minDateObject = new Date(minDate);
+  maxDateObject = new Date(maxDate);
+  // estimate how many point there will be in chart and adjust delta of request
   // a few days
   if ( deltaChart < 50 * DELTA_HOUR )
   {
-    deltaRequest = DELTA_HOUR
+    deltaRequest = 0.8*DELTA_HOUR
+    minDateObject.setUTCHours(0);
+    minDateObject.setUTCMinutes(0);
+    minDateObject.setUTCSeconds(0);
+
+    maxDateObject.setUTCHours(23);
+    maxDateObject.setUTCMinutes(59);
+    maxDateObject.setUTCSeconds(59);
   }
 
   // a few weeks
   else if( deltaChart < 50 * DELTA_DAY )
   {
     deltaRequest = DELTA_DAY
+    minDateObject.setUTCHours(0);
+    minDateObject.setUTCMinutes(0);
+    minDateObject.setUTCSeconds(0);
+
   }
 
   // a few month
   else if ( deltaChart < 50 * DELTA_WEEK )
   {
     deltaRequest = DELTA_WEEK;
+    minDateObject.setUTCHours(0);
+    minDateObject.setUTCMinutes(0);
+    minDateObject.setUTCSeconds(0);
+
   }
   else
   {
     deltaRequest = DELTA_MONTH;
+    minDateObject.setUTCHours(0);
+    minDateObject.setUTCMinutes(0);
+    minDateObject.setUTCSeconds(0);
+
   }
 
-  $.getJSON('getConso.php?delta=' + deltaRequest + '&minDate=' + Math.floor(minDate) + '&maxDate=' + Math.floor(maxRequest), createChart);
+  minRequest = minDateObject.getTime();
+  maxRequest = maxDateObject.getTime();
+
+  $.getJSON('getConso.php?delta=' + Math.floor(deltaRequest/1000) + '&minDate=' + Math.floor(minRequest/1000) + '&maxDate=' + Math.floor(maxRequest/1000), createChart);
 };
 
-$(document).ready(function(){
-  asyncCreateChart(0, Date.now() / 1000);
+$(document).ready(function()
+{
+  updateChart();
 
   $( "#radio" ).buttonset();
-  
+
+  $( "#prev" ).button().click(function( event ) {
+    event.preventDefault();
+    prev();
+  });
+
+  $( "#next" ).button().click(function( event ) {
+    event.preventDefault();
+    next();
+  });
+
   $( "#day" ).click(function(){
-    asyncCreateChart(Date.now()/1000 - DELTA_DAY, Date.now() / 1000);
+    setMode(MODE_DAY);
   });
 
   $( "#week" ).click(function(){
-    asyncCreateChart(Date.now()/1000 - DELTA_WEEK, Date.now() / 1000);
+    setMode(MODE_WEEK);
   });
-  
+
   $( "#month" ).click(function(){
-    asyncCreateChart(Date.now()/1000 - DELTA_MONTH, Date.now() / 1000);
+    setMode(MODE_MONTH);
   });
 
   $( "#year" ).click(function(){
-    asyncCreateChart(Date.now()/1000 - DELTA_YEAR, Date.now() / 1000);
+    setMode(MODE_YEAR);
   });
 
   $( "#all" ).click(function(){
-    asyncCreateChart(0, Date.now() / 1000);
+    setMode(MODE_ALL);
   });
 
 });
@@ -143,11 +237,13 @@ $(document).ready(function(){
   </div>
   <form>
     <div id="radio">
-      <input type="radio" id="day" name="radio"><label for="day">Today</label>
-      <input type="radio" id="week" name="radio" checked="checked"><label for="week">This week</label>
+      <button id="prev"><<</button>
+      <input type="radio" id="day" name="radio" checked="checked"><label for="day">Today</label>
+      <input type="radio" id="week" name="radio"><label for="week">This week</label>
       <input type="radio" id="month" name="radio"><label for="month">This month</label>
       <input type="radio" id="year" name="radio"><label for="year">This year</label>
       <input type="radio" id="all" name="radio"><label for="all">all</label>
+      <button id="next">>></button>
     </div>
   </form>
   <div id="container_puissance" style="min-width: 310px; height: 400px; margin: 0 auto"></div>

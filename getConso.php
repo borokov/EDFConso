@@ -12,29 +12,30 @@ $delta = $_GET["delta"];
     $sql = 'SELECT * FROM conso WHERE date BETWEEN \''.date("Y-m-d h:m:s", $minDate).'\' AND \''.date("Y-m-d h:m:s", $maxDate).'\' ORDER BY date ASC';  
     $req = mysql_query($sql) or die('Erreur SQL !<br />'.$sql.'<br />'.mysql_error());
     $data = mysql_fetch_array($req);
-    $prevConso = $data['hc'];
+    $prevConsoHC = $data['hc'];
+    $prevConsoHP = $data['hp'];
     $prevDate = strtotime($data['date']);
     $valueId = 0;
-    echo("{\n\"data\": [\n");
+    echo("[[null, \"HC\", \"HP\"]\n");
     while ($data = mysql_fetch_array($req))
     {
       $currentDate = strtotime($data['date']);
-      $currentConso = $data['hc'];
+      $currentConsoHC = $data['hc'];
+      $currentConsoHP = $data['hp'];
       if  ( $currentDate > $prevDate + $delta )
       {
-        $deltaConso = $currentConso - $prevConso; // w
+        $deltaConsoHC = $currentConsoHC - $prevConsoHC; // w
+        $deltaConsoHP = $currentConsoHP - $prevConsoHP; // w
         $currentDateMs = 1000*$currentDate;
         $deltaDate = ($currentDate - $prevDate) / 3600.0; // hours
-        if ( $valueId > 0 )
-        {
           echo(",");
-        }
         $valueId = $valueId + 1;
-        echo("[".$currentDateMs.", ".$deltaConso/$deltaDate."]\n");
-        $prevConso = $currentConso;
+        echo("[".$currentDateMs.", ".round($deltaConsoHC/$deltaDate).", ".round($deltaConsoHP/$deltaDate)."]\n");
+        $prevConsoHC = $currentConsoHC;
+        $prevConsoHP = $currentConsoHP;
         $prevDate = $currentDate;
       }
     }
-    echo("\n]}");
+    echo("\n]");
 
 ?>
