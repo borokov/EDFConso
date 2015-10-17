@@ -221,6 +221,13 @@ $(document).ready(function()
 {
   updateChart();
 
+
+  Highcharts.setOptions({
+    global: {
+      timezoneOffset: -2 * 60
+    }
+  });
+
   $( "#radio" ).buttonset();
 
   $( "#prev" ).button().click(function( event ) {
