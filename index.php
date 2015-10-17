@@ -32,6 +32,9 @@ MODE_MONTH = 3;
 MODE_YEAR = 4;
 MODE_ALL = 5;
 
+DAYS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+MONTHS = ["Janvier", "Fevrier", "Mars", "Avril", "May", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"];
+
 m_selectedMode = MODE_DAY
 m_selectedLastDate = Date.now();
 
@@ -111,6 +114,28 @@ function updateChart()
   }
 }
 
+function dateToTitle(date)
+{
+  title = "";
+  dateObject = new Date(date);
+  switch(m_selectedMode)
+  {
+    case MODE_DAY:
+      title = DAYS[dateObject.getDay()];
+      break;
+    case MODE_WEEK:
+      break
+    case MODE_MONTH:
+      title = MONTHS[dateObject.getMonth()];
+      break;
+    case MODE_YEAR:
+      break;
+    case MODE_ALL:
+      break;
+  }
+  return title;
+}
+
 function createChart(csv)
 {
     $('#container_puissance').highcharts({
@@ -118,7 +143,7 @@ function createChart(csv)
             type: 'spline'
         },
         title: {
-            text: 'Puissance moyenne'
+            text: dateToTitle(m_selectedLastDate)
         },
         yAxis: {
             min: 0,
@@ -158,10 +183,14 @@ function asyncCreateChart(minDate, maxDate)
   else if( deltaChart < 50 * DELTA_DAY )
   {
     deltaRequest = DELTA_DAY
+    minDateObject.setDate(0);
     minDateObject.setUTCHours(0);
     minDateObject.setUTCMinutes(0);
     minDateObject.setUTCSeconds(0);
 
+    maxDateObject.setUTCHours(23);
+    maxDateObject.setUTCMinutes(59);
+    maxDateObject.setUTCSeconds(59);
   }
 
   // a few month

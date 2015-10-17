@@ -1,0 +1,16 @@
+table {
+  border: medium solid #000;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+th {
+  border: thin solid #6495ed;
+  background-color: #D0E3FA;
+}
+
+td {
+  border: thin solid #6495ed;
+  text-align: center;
+}
+
