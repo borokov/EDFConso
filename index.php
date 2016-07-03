@@ -97,19 +97,69 @@ function updateChart()
   switch(m_selectedMode)
   {
     case MODE_DAY:
-      asyncCreateChart(m_selectedLastDate, m_selectedLastDate);
+			// hour0 is 0:00:00
+			hour0 = new Date(m_selectedLastDate);
+      hour0.setHours(0);
+      hour0.setMinutes(0);
+      hour0.setSeconds(0);
+		  // hour24 is 23:59:59
+			hour24 = new Date(m_selectedLastDate);
+      hour24.setHours(23);
+      hour24.setMinutes(59);
+      hour24.setSeconds(59);
+
+      asyncCreateChart(hour0, hour24);
       break;
     case MODE_WEEK:
-      asyncCreateChart(m_selectedLastDate - DELTA_WEEK, m_selectedLastDate);
+			monday = new Date(m_selectedLastDate);
+			monday.setDate(monday.getDate() - monday.getDay() + (monday.getDay() == 0 ? -6:1));
+			monday.setHours(0);
+      monday.setMinutes(0);
+      monday.setSeconds(0);
+			
+			sunday = new Date(monday);
+			sunday.setDate(monday.getDate() + 6);
+			sunday.setHours(23);
+      sunday.setMinutes(59);
+      sunday.setSeconds(59);
+
+      asyncCreateChart(monday, sunday);
       break
     case MODE_MONTH:
-      asyncCreateChart(m_selectedLastDate - DELTA_MONTH, m_selectedLastDate);
+			// get 1st day and last days of current selected month
+			firstOfMonth = new Date(m_selectedLastDate);
+			firstOfMonth.setDate(1);
+		  firstOfMonth.setHours(0);
+      firstOfMonth.setMinutes(0);
+      firstOfMonth.setSeconds(0);
+			
+			lastOfMonth = new Date(firstOfMonth);
+			lastOfMonth.setMonth(firstOfMonth.getMonth() + 1);
+		  lastOfMonth.setHours(23);
+      lastOfMonth.setMinutes(59);
+      lastOfMonth.setSeconds(59);
+			
+      asyncCreateChart(firstOfMonth, lastOfMonth);
       break;
     case MODE_YEAR:
-      asyncCreateChart(m_selectedLastDate - DELTA_YEAR, m_selectedLastDate);
+			firstDay = new Date(m_selectedLastDate);
+			firstDay.setMonth(0);
+			firstDay.setDate(1);
+		  firstDay.setHours(0);
+      firstDay.setMinutes(0);
+      firstDay.setSeconds(0);
+			
+			lastDay = new Date(m_selectedLastDate);
+			lastDay.setMonth(11);
+			lastDay.setDate(31);
+		  lastDay.setHours(23);
+      lastDay.setMinutes(59);
+      lastDay.setSeconds(59);
+			
+      asyncCreateChart(firstDay, lastDay);
       break;
     case MODE_ALL:
-      asyncCreateChart(0, m_selectedLastDate);
+      asyncCreateChart(new Date(0), new Date(m_selectedLastDate));
       break;
   }
 }
@@ -163,57 +213,34 @@ function asyncCreateChart(minDate, maxDate)
   deltaRequest = 0;
   maxRequest = maxDate + 0.2 * deltaRequest;
 
-  minDateObject = new Date(minDate);
-  maxDateObject = new Date(maxDate);
   // estimate how many point there will be in chart and adjust delta of request
   // a few days
-  if ( deltaChart < 50 * DELTA_HOUR )
+  if ( deltaChart < 3 * DELTA_DAY )
   {
-    deltaRequest = 0.8*DELTA_HOUR
-    minDateObject.setUTCHours(0);
-    minDateObject.setUTCMinutes(0);
-    minDateObject.setUTCSeconds(0);
-
-    maxDateObject.setUTCHours(23);
-    maxDateObject.setUTCMinutes(59);
-    maxDateObject.setUTCSeconds(59);
+		// have to set little bit less than 1 hour else getConso.php bug because measures
+		// are done ~= evry hours
+    deltaRequest = 0.8*DELTA_HOUR;
   }
 
   // a few weeks
-  else if( deltaChart < 50 * DELTA_DAY )
+  else if( deltaChart < 4 * DELTA_WEEK )
   {
     deltaRequest = DELTA_DAY
-    minDateObject.setDate(0);
-    minDateObject.setUTCHours(0);
-    minDateObject.setUTCMinutes(0);
-    minDateObject.setUTCSeconds(0);
-
-    maxDateObject.setUTCHours(23);
-    maxDateObject.setUTCMinutes(59);
-    maxDateObject.setUTCSeconds(59);
   }
 
   // a few month
-  else if ( deltaChart < 50 * DELTA_WEEK )
+  else if ( deltaChart < 10 * DELTA_MONTH )
   {
-    deltaRequest = DELTA_WEEK;
-    minDateObject.setUTCHours(0);
-    minDateObject.setUTCMinutes(0);
-    minDateObject.setUTCSeconds(0);
-
+    deltaRequest = DELTA_DAY;
   }
   else
   {
     deltaRequest = DELTA_MONTH;
-    minDateObject.setUTCHours(0);
-    minDateObject.setUTCMinutes(0);
-    minDateObject.setUTCSeconds(0);
-
   }
 
-  minRequest = minDateObject.getTime();
-  maxRequest = maxDateObject.getTime();
-
+  minRequest = minDate.getTime();
+  maxRequest = maxDate.getTime();
+	
   $.getJSON('getConso.php?delta=' + Math.floor(deltaRequest/1000) + '&minDate=' + Math.floor(minRequest/1000) + '&maxDate=' + Math.floor(maxRequest/1000), createChart);
 };
 
