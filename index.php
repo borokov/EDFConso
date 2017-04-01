@@ -298,6 +298,32 @@ $(document).ready(function()
       <h1>Consommation EDF</h1>
     </div>
   </div>
+	    <div id="releve">
+      <ul>
+				<li>
+					Heures pleines
+					<?php
+                // valeur fin de releve
+                $sqlHP = "SELECT hp FROM conso ORDER BY conso.date DESC ";
+                $reqHP = mysql_query($sqlHP) or die("Erreur SQL !<br />".$sqlHP."<br />".mysql_error());  
+                $HP = mysql_fetch_array($reqHP);
+                echo(round($HP['hp']/1000));
+					?>
+          kwh
+				</li>
+				<li>
+					Heures creuses
+					<?php
+                // valeur fin de releve
+                $sqlHC = "SELECT hc FROM conso ORDER BY conso.date DESC ";
+                $reqHC = mysql_query($sqlHC) or die("Erreur SQL !<br />".$sqlHC."<br />".mysql_error());  
+                $HC = mysql_fetch_array($reqHC);
+                echo(round($HC['hc']/1000));
+					?>
+          kwh
+				</li>
+			</ul>
+    </div>
   <form>
     <div id="radio">
       <button id="prev"><<</button>
