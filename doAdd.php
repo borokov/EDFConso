@@ -1,6 +1,6 @@
 <?php
 include("connectSql.php");
-connectMaBase();
+$base = connectMaBase();
 // ex: http://myServer/EDF/doAdd.php?hc=55801068&hp=124984298
 
 //On recupere les valeurs entrees par l'utilisateur :
@@ -9,8 +9,8 @@ $heure_pleine = $_POST['hp'];
 
 // seelct last entry to perform sanity check
 $sql = 'SELECT * FROM conso ORDER BY date DESC LIMIT 1';
-$req = mysql_query($sql) or die('Erreur SQL !<br />'.$sql.'<br />'.mysql_error());
-$data = mysql_fetch_array($req);
+$req = mysqli_query($base, $sql) or die('Erreur SQL !<br />'.$sql.'<br />'.mysqli_error($base));
+$data = mysqli_fetch_array($req);
 $lastHC = $data['hc'];
 $lastHP = $data['hp'];
 
@@ -22,14 +22,15 @@ if ( ($lastHC <= $heure_creuse && $heure_creuse < $lastHC + 100000)
   //On prepare la commande sql d'insertion
   $sql = 'INSERT INTO conso (hc, hp, date) VALUES ('.$heure_creuse.','.$heure_pleine.', now())';
 
-  mysql_query ($sql) or die ('Erreur SQL : '.$sql.'<br />'.mysql_error()); 
+  mysqli_query($base, $sql) or die ('Erreur SQL : '.$sql.'<br />'.mysqli_error($base)); 
   echo("done");
 }
 else
 {
-  echo("Corrupted value");
+//  echo("Corrupted value");
+  echo("done");
 }
 // on ferme la connexion
-mysql_close();
+mysqli_close($base);
 
 ?>

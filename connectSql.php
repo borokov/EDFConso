@@ -1,6 +1,13 @@
 <?php
+error_reporting(E_ALL ^ E_DEPRECATED);
 function connectMaBase(){
-    $base = mysql_connect ('localhost', 'usrName', 'password');  
-    mysql_select_db ('dbName', $base) ;
+    $base = mysqli_connect ('localhost', 'user', 'password');  
+    if (mysqli_connect_errno())
+    {
+      echo "Failed to connect to MySQL: " . mysqli_connect_error();
+    }
+    mysqli_select_db ($base, 'EDF') ;
+
+    return $base;
 }
 ?>

@@ -6,12 +6,12 @@ $delta = $_GET["delta"];
 
 include("connectSql.php");
 //On se connecte
-connectMaBase();
+$base = connectMaBase();
 
 $sql = 'SELECT * FROM conso WHERE date BETWEEN \''.date("Y-m-d H:m:s", $minDate-$delta).'\' AND \''.date("Y-m-d H:m:s", $maxDate).'\' ORDER BY date ASC';  
 
-$req = mysql_query($sql) or die('Erreur SQL !<br />'.$sql.'<br />'.mysql_error());
-$data = mysql_fetch_array($req);
+$req = mysqli_query($base, $sql) or die('Erreur SQL !<br />'.$sql.'<br />'.mysqli_error($base));
+$data = mysqli_fetch_array($req);
 $prevConsoHC = $data['hc'];
 $prevConsoHP = $data['hp'];
 $prevConsoTot = $data['hc'] + $data['hp'];
@@ -20,7 +20,7 @@ $prevDate = $currentDate;
 $valueId = 0;
 
 echo("[[null, \"HC\", \"HP\", \"Tot\"]\n");
-while ($data = mysql_fetch_array($req))
+while ($data = mysqli_fetch_array($req))
 {
   $currentDate = strtotime($data['date']);
   $currentDateMs = 1000*$currentDate;

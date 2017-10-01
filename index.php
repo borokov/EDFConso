@@ -3,7 +3,7 @@
   <?php
     include("connectSql.php");
     //On se connecte
-    connectMaBase();
+    $base = connectMaBase();
   ?>
 <head>
   <title>Consommation EDF</title>
@@ -305,8 +305,8 @@ $(document).ready(function()
 					<?php
                 // valeur fin de releve
                 $sqlHP = "SELECT hp FROM conso ORDER BY conso.date DESC ";
-                $reqHP = mysql_query($sqlHP) or die("Erreur SQL !<br />".$sqlHP."<br />".mysql_error());  
-                $HP = mysql_fetch_array($reqHP);
+                $reqHP = mysqli_query($base, $sqlHP) or die("Erreur SQL !<br />".$sqlHP."<br />".mysqli_error($base));  
+                $HP = mysqli_fetch_array($reqHP);
                 echo(round($HP['hp']/1000));
 					?>
           kwh
@@ -316,8 +316,8 @@ $(document).ready(function()
 					<?php
                 // valeur fin de releve
                 $sqlHC = "SELECT hc FROM conso ORDER BY conso.date DESC ";
-                $reqHC = mysql_query($sqlHC) or die("Erreur SQL !<br />".$sqlHC."<br />".mysql_error());  
-                $HC = mysql_fetch_array($reqHC);
+                $reqHC = mysqli_query($base, $sqlHC) or die("Erreur SQL !<br />".$sqlHC."<br />".mysqli_error($base));  
+                $HC = mysqli_fetch_array($reqHC);
                 echo(round($HC['hc']/1000));
 					?>
           kwh
