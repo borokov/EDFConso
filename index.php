@@ -159,7 +159,7 @@ function updateChart()
       asyncCreateChart(firstDay, lastDay);
       break;
     case MODE_ALL:
-      asyncCreateChart(new Date(0), new Date(m_selectedLastDate));
+      asyncCreateChart(new Date(0), new Date(Date.now()));
       break;
   }
 }
@@ -185,22 +185,51 @@ function dateToTitle(date)
   }
   return title;
 }
+		
+function getLegend()
+{
+  switch(m_selectedMode)
+  {
+    case MODE_DAY:
+      return "conso [kw]";
+    case MODE_WEEK:
+      return "conso [kwh/j]"
+    case MODE_MONTH:
+      return "conso [kwh/j]"
+    case MODE_YEAR:
+      return "conso [kwh/mois]"
+    case MODE_ALL:
+      return "conso [kwh/mois]"
+  }
+  return title;	
+}
 
 function createChart(csv)
 {
     $('#container_puissance').highcharts({
         chart: {
-            type: 'spline'
+            type: 'column'
         },
         title: {
             text: dateToTitle(m_selectedLastDate)
         },
         yAxis: {
-            min: 0,
-            max: 1500,
+            //min: 0,
+            //max: 20,
+						title: {
+					  	text: getLegend()
+						},
             startOnTick: false,
             endOnTick: false
         },
+			  plotOptions: {
+        	column: {
+						//stacking: 'normal',
+            pointPadding: 0,
+            borderWidth: 0,
+						groupPadding: 0.1
+        	}
+    		},
         data: {
            rows: csv
         }
@@ -233,9 +262,13 @@ function asyncCreateChart(minDate, maxDate)
   {
     deltaRequest = DELTA_DAY;
   }
-  else
+  else if ( deltaChart < 15 * DELTA_MONTH )
   {
     deltaRequest = DELTA_MONTH;
+  }
+	else
+  {
+    deltaRequest = DELTA_YEAR;
   }
 
   minRequest = minDate.getTime();

@@ -23,7 +23,6 @@ echo("[[null, \"HC\", \"HP\", \"Tot\"]\n");
 while ($data = mysqli_fetch_array($req))
 {
   $currentDate = strtotime($data['date']);
-  $currentDateMs = 1000*$currentDate;
   $currentConsoHC = $data['hc'];
   $currentConsoHP = $data['hp'];
   $currentConsoTot = $data['hc'] + $data['hp'];
@@ -32,10 +31,11 @@ while ($data = mysqli_fetch_array($req))
     $deltaConsoHC = $currentConsoHC - $prevConsoHC; // watt heure
     $deltaConsoHP = $currentConsoHP - $prevConsoHP; // watt heure
     $deltaConsoTot = $deltaConsoHC + $deltaConsoHP; // watt heure
-    $deltaDate = ($currentDate - $prevDate) / 3600.0; // hours
     echo(",");
     $valueId = $valueId + 1;
-    echo("[".$currentDateMs.", ".round($deltaConsoHC/$deltaDate).", ".round($deltaConsoHP/$deltaDate).", ".round($deltaConsoTot/$deltaDate)."]\n");
+    $prevDateMs = 1000*$prevDate;
+    echo("[".$prevDateMs.", ".number_format($deltaConsoHC/1000, 2, '.', '').", ".number_format($deltaConsoHP/1000, 2, '.', '').", ".number_format($deltaConsoTot/1000, 2, '.', '')."]\n");
+    
     $prevConsoHC = $currentConsoHC;
     $prevConsoHP = $currentConsoHP;
     $prevConsoTot = $prevConsoHC + $prevConsoHP;
