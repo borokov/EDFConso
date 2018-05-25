@@ -199,7 +199,7 @@ function getLegend()
     case MODE_YEAR:
       return "conso [kwh/mois]"
     case MODE_ALL:
-      return "conso [kwh/mois]"
+      return "conso [kwh/ans]"
   }
   return title;	
 }
@@ -333,6 +333,16 @@ $(document).ready(function()
   </div>
 	    <div id="releve">
       <ul>
+        <li>
+					Dernier relevé:
+					<?php
+                // valeur fin de releve
+                $sqlDate = "SELECT date FROM conso ORDER BY conso.date DESC ";
+                $reqDate = mysqli_query($base, $sqlDate) or die("Erreur SQL !<br />".$sqlDate."<br />".mysqli_error($base));  
+                $date = mysqli_fetch_array($reqDate);
+                echo($date['date'] );
+					?>
+				</li>
 				<li>
 					Heures pleines
 					<?php
