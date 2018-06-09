@@ -31,6 +31,7 @@ MODE_WEEK = 2;
 MODE_MONTH = 3;
 MODE_YEAR = 4;
 MODE_ALL = 5;
+MODE_ALL_YEARS = 6;
 
 DAYS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 MONTHS = ["Janvier", "Fevrier", "Mars", "Avril", "May", "Juin", "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre"];
@@ -63,6 +64,7 @@ function prev()
       m_selectedLastDate -= DELTA_YEAR;
       break;
     case MODE_ALL:
+    case MODE_ALL_YEARS:
       m_selectedLastDate = Date.now();
       break;
   }
@@ -86,6 +88,7 @@ function next()
         m_selectedLastDate += DELTA_YEAR;
         break;
     case MODE_ALL:
+    case MODE_ALL_YEARS:
         m_selectedLastDate = Date.now();
         break;
   }
@@ -159,6 +162,7 @@ function updateChart()
       asyncCreateChart(firstDay, lastDay);
       break;
     case MODE_ALL:
+    case MODE_ALL_YEARS:
       asyncCreateChart(new Date(0), new Date(Date.now()));
       break;
   }
@@ -181,6 +185,7 @@ function dateToTitle(date)
     case MODE_YEAR:
       break;
     case MODE_ALL:
+    case MODE_ALL_YEARS:
       break;
   }
   return title;
@@ -199,6 +204,8 @@ function getLegend()
     case MODE_YEAR:
       return "conso [kwh/mois]"
     case MODE_ALL:
+      return "conso [kwh/mois]"
+    case MODE_ALL_YEARS:
       return "conso [kwh/ans]"
   }
   return title;	
@@ -241,34 +248,32 @@ function asyncCreateChart(minDate, maxDate)
   deltaChart = maxDate - minDate;
   deltaRequest = 0;
   maxRequest = maxDate + 0.2 * deltaRequest;
-
-  // estimate how many point there will be in chart and adjust delta of request
-  // a few days
-  if ( deltaChart < 3 * DELTA_DAY )
+  
+  switch(m_selectedMode)
   {
-		// have to set little bit less than 1 hour else getConso.php bug because measures
-		// are done ~= evry hours
-    deltaRequest = 0.8*DELTA_HOUR;
-  }
-
-  // a few weeks
-  else if( deltaChart < 4 * DELTA_WEEK )
-  {
-    deltaRequest = DELTA_DAY
-  }
-
-  // a few month
-  else if ( deltaChart < 10 * DELTA_MONTH )
-  {
-    deltaRequest = DELTA_DAY;
-  }
-  else if ( deltaChart < 15 * DELTA_MONTH )
-  {
-    deltaRequest = DELTA_MONTH;
-  }
-	else
-  {
-    deltaRequest = DELTA_YEAR;
+    case MODE_DAY:
+      // have to set little bit less than 1 hour else getConso.php bug because measures
+      // are done ~= evry hours
+      deltaRequest = 0.8*DELTA_HOUR;
+      break;
+    case MODE_WEEK:
+      // have to set little bit less than 1 hour else getConso.php bug because measures
+      // are done ~= evry hours
+      deltaRequest = DELTA_DAY;
+      break;
+    case MODE_MONTH:
+      deltaRequest = DELTA_DAY;
+      break;
+    case MODE_YEAR:
+      deltaRequest = DELTA_MONTH;
+      break;
+    case MODE_ALL:
+      deltaRequest = DELTA_MONTH;
+      break;
+    case MODE_ALL_YEARS:
+      deltaRequest = DELTA_YEAR;
+      break;
+      
   }
 
   minRequest = minDate.getTime();
@@ -318,6 +323,10 @@ $(document).ready(function()
 
   $( "#all" ).click(function(){
     setMode(MODE_ALL);
+  });
+  
+  $( "#all_years" ).click(function(){
+    setMode(MODE_ALL_YEARS);
   });
 
 });
@@ -375,6 +384,7 @@ $(document).ready(function()
       <input type="radio" id="month" name="radio"><label for="month">This month</label>
       <input type="radio" id="year" name="radio"><label for="year">This year</label>
       <input type="radio" id="all" name="radio"><label for="all">all</label>
+      <input type="radio" id="all_years" name="radio"><label for="all_years">all years</label>
       <button id="next">>></button>
     </div>
   </form>
