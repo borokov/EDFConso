@@ -26,15 +26,27 @@ while ($data = mysqli_fetch_array($req))
   $currentConsoHC = $data['hc'];
   $currentConsoHP = $data['hp'];
   $currentConsoTot = $data['hc'] + $data['hp'];
+  
   if ( $currentDate > $prevDate + $delta )
   {
     $deltaConsoHC = $currentConsoHC - $prevConsoHC; // watt heure
     $deltaConsoHP = $currentConsoHP - $prevConsoHP; // watt heure
     $deltaConsoTot = $deltaConsoHC + $deltaConsoHP; // watt heure
-    echo(",");
+    
     $valueId = $valueId + 1;
     $prevDateMs = 1000*$prevDate;
-    echo("[".$prevDateMs.", ".number_format($deltaConsoHC/1000, 2, '.', '').", ".number_format($deltaConsoHP/1000, 2, '.', '').", ".number_format($deltaConsoTot/1000, 2, '.', '')."]\n");
+    
+    // Dirty workaround. When minDate is 0, 1st value is messed up because it correspond
+    // to 1st initial value (ie. when I bought the house).
+    if ( $minDate != 0 )
+    {
+      echo(",");
+      echo("[".$prevDateMs.", ".number_format($deltaConsoHC/1000, 2, '.', '').", ".number_format($deltaConsoHP/1000, 2, '.', '').", ".number_format($deltaConsoTot/1000, 2, '.', '')."]\n");
+    }
+    else
+    {
+      $minDate = $prevDate;
+    }
     
     $prevConsoHC = $currentConsoHC;
     $prevConsoHP = $currentConsoHP;
