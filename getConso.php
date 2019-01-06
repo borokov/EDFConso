@@ -27,7 +27,7 @@ while ($data = mysqli_fetch_array($req))
   $currentConsoHP = $data['hp'];
   $currentConsoTot = $data['hc'] + $data['hp'];
   
-  if ( $currentDate > $prevDate + $delta )
+  if ( $currentDate >= $prevDate + $delta )
   {
     $deltaConsoHC = $currentConsoHC - $prevConsoHC; // watt heure
     $deltaConsoHP = $currentConsoHP - $prevConsoHP; // watt heure

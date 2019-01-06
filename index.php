@@ -359,7 +359,7 @@ $(document).ready(function()
                 $sqlHP = "SELECT hp FROM conso ORDER BY conso.date DESC ";
                 $reqHP = mysqli_query($base, $sqlHP) or die("Erreur SQL !<br />".$sqlHP."<br />".mysqli_error($base));  
                 $HP = mysqli_fetch_array($reqHP);
-                echo(round($HP['hp']/1000));
+                echo(round(((int)$HP['hp']-133789932)/1000));
 					?>
           kwh
 				</li>
@@ -370,7 +370,7 @@ $(document).ready(function()
                 $sqlHC = "SELECT hc FROM conso ORDER BY conso.date DESC ";
                 $reqHC = mysqli_query($base, $sqlHC) or die("Erreur SQL !<br />".$sqlHC."<br />".mysqli_error($base));  
                 $HC = mysqli_fetch_array($reqHC);
-                echo(round($HC['hc']/1000));
+                echo(round(((int)$HC['hc']-63830532)/1000));
 					?>
           kwh
 				</li>

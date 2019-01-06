@@ -1,7 +1,16 @@
 <?php
+// return time of day floored to 5s
+function getTimeOfDay5s()
+{
+  $timesamp = time();
+  $timesamp = (int)floor((float)$timesamp / 5.) * 5;
+  
+  return date("Y-m-d H:i:s",  $timesamp);
+}
+
 include("connectSql.php");
 $base = connectMaBase();
-// ex: http://myServer/EDF/doAdd.php?hc=55801068&hp=124984298&I=5
+// ex: curl --request POST http://myServer/EDF/doAdd.php?hc=55801068&hp=124984298&I=5
 
 // Get inputs
 // Add offset corresponding to last report before changing to linky (because linky reset to 0)
@@ -27,14 +36,16 @@ if ( ($lastHC <= $heure_creuse && $heure_creuse < $lastHC + 100000)
   // If measure correspond to a new hour, insert value in database
   if ( $lastHour != $current_hour )
   {
-    $sql = 'INSERT INTO conso (hc, hp, date) VALUES ('.$heure_creuse.','.$heure_pleine.', now())';
-    mysqli_query($base, $sql) or die ('Erreur SQL : '.$sql.'<br />'.mysqli_error($base)); 
+    // Just ensure second are really 0. Makes database cleaner.
+    $datetime = date("Y-m-d H:i:00");
+    $sql = 'INSERT INTO conso (hc, hp, date) VALUES ('.$heure_creuse.','.$heure_pleine.', "'.$datetime.'")';
+    mysqli_query($base, $sql) or die ('Erreur SQL : '.$sql.'<br />'.mysqli_error($base));
   }
   echo("done");
 }
 else
 {
-  //echo("Corrupted value");
+  echo("Corrupted value: ".$lastHC." ".$heure_creuse." - ".$lastHP." ".$heure_pleine);
   echo("done");
 }
 // on ferme la connexion
