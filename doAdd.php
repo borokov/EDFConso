@@ -1,22 +1,54 @@
 <?php
-// return time of day floored to 5s
-function getTimeOfDay5s()
-{
-  $timesamp = time();
-  $timesamp = (int)floor((float)$timesamp / 5.) * 5;
-  
-  return date("Y-m-d H:i:s",  $timesamp);
-}
 
-include("connectSql.php");
-$base = connectMaBase();
-// ex: curl --request POST http://myServer/EDF/doAdd.php?hc=55801068&hp=124984298&I=5
+// ex: curl --request POST http://myServer/EDF/doAdd.php?hc=55801068&hp=124984298&iinst=5
 
 // Get inputs
 // Add offset corresponding to last report before changing to linky (because linky reset to 0)
 $heure_creuse = $_POST['hc'] + 63830532;
 $heure_pleine = $_POST['hp'] + 133789932;
-$IInst = $POST['I'];
+$IInst = (int)$_POST['iinst'];
+
+//----------------------------------------------------------------------------
+// INsert into InfluxDB
+
+require __DIR__ . '/vendor/autoload.php';
+
+# see https://docs.influxdata.com/influxdb/v1.7/introduction/getting-started/
+# and https://github.com/influxdata/influxdb-php
+
+$influxDBHost = "127.0.0.1";
+$influxDBPort = 8086;
+
+$client = new \InfluxDB\Client($influxDBHost, $influxDBPort);
+$database = $client->selectDB('EDF');
+
+// executing a query will yield a resultset object
+$result = $database->query('select last(*) from IINST');
+
+// get the points from the resultset yields an array
+$points = $result->getPoints();
+
+if ( $heure_creuse >= $points['hc'] && $heure_pleine >= $points['hc'] && $points['value'] >= 0 )
+{
+  // create an array of points
+  $points = array(
+    new \InfluxDB\Point(
+      'IINST', // name of the measurement
+      $IInst, // the measurement value
+      [],
+      ['hc' => $heure_creuse, 'hp' => $heure_pleine] // optional additional fields
+    )
+  );
+
+  // we are writing unix timestamps, which have a second precision
+  $result = $database->writePoints($points, \InfluxDB\Database::PRECISION_SECONDS);
+}
+
+//----------------------------------------------------------------------------
+// Legacy database
+
+include("connectSql.php");
+$base = connectMaBase();
 
 $current_hour = date("H");
 
