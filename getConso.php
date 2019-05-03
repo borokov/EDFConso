@@ -34,7 +34,7 @@ while ($data = mysqli_fetch_array($req))
     $deltaConsoTot = $deltaConsoHC + $deltaConsoHP; // watt heure
     
     $valueId = $valueId + 1;
-    $prevDateMs = 1000*$prevDate;
+    $prevDateMs = 1000 * $prevDate;
     
     // Dirty workaround. When minDate is 0, 1st value is messed up because it correspond
     // to 1st initial value (ie. when I bought the house).

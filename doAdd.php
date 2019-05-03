@@ -4,9 +4,9 @@
 
 // Get inputs
 // Add offset corresponding to last report before changing to linky (because linky reset to 0)
-$heure_creuse = $_POST['hc'] + 63830532;
-$heure_pleine = $_POST['hp'] + 133789932;
-$IInst = (int)$_POST['iinst'];
+$heure_creuse = (int)$_POST['hc'] + 63830532;
+$heure_pleine = (int)$_POST['hp'] + 133789932;
+$iinst = (int)$_POST['iinst'];
 
 //----------------------------------------------------------------------------
 // INsert into InfluxDB
@@ -23,25 +23,36 @@ $client = new \InfluxDB\Client($influxDBHost, $influxDBPort);
 $database = $client->selectDB('EDF');
 
 // executing a query will yield a resultset object
-$result = $database->query('select last(*) from IINST');
+$result = $database->query('select last(value), hc, hp from IINST');
 
 // get the points from the resultset yields an array
-$points = $result->getPoints();
+$points = $result->getPoints()[0];
 
-if ( $heure_creuse >= $points['hc'] && $heure_pleine >= $points['hc'] && $points['value'] >= 0 )
+$lastEntryTime = strtotime($points['time']);
+
+// Sanity check: Avoid corrupted values (if values are realy too different or too high),
+// But authorize entry when last entry is more than 1 hour. This means arduino may have crashed and have been restarted
+if ( ((int)$points['hc']  <= $heure_creuse && $heure_creuse <= (int)$points['hc'] + 10000
+    && (int)$points['hp'] <= $heure_pleine && $heure_pleine <= (int)$points['hp'] + 10000
+    && 0 <= $iinst && $iinst < 40)
+    || (time() - $lastEntryTime > 3600) )
 {
   // create an array of points
   $points = array(
     new \InfluxDB\Point(
       'IINST', // name of the measurement
-      $IInst, // the measurement value
+      (int)$iinst, // the measurement value
       [],
-      ['hc' => $heure_creuse, 'hp' => $heure_pleine] // optional additional fields
+      ['hc' => (int)$heure_creuse, 'hp' => (int)$heure_pleine] // optional additional fields
     )
   );
 
   // we are writing unix timestamps, which have a second precision
   $result = $database->writePoints($points, \InfluxDB\Database::PRECISION_SECONDS);
+}
+else
+{
+  error_log("InfluxDB: Corrupted values: lastHC: ".$points['hc']." hp: ".$heure_creuse." - lastHP: ".$points['hp']." hp:".$heure_pleine, 3, "/var/tmp/EDF-errors.log");
 }
 
 //----------------------------------------------------------------------------
@@ -59,11 +70,13 @@ $data = mysqli_fetch_array($req);
 $lastHC = $data['hc'];
 $lastHP = $data['hp'];
 $lastHour = date("H", strtotime($data['date']));
+$lastEntryTime = strtotime($data['date']);
 
 // sanity check because sometime values are currupted. Ensure monitored HC/HP is > last entry
 // and < last entry + some amount
-if ( ($lastHC <= $heure_creuse && $heure_creuse < $lastHC + 100000)
-   && ($lastHP <= $heure_pleine && $heure_pleine < $lastHP + 100000) )
+// Authorize entry when last entry is more than 1 hour. This means arduino may have crashed and have been restarted
+if ( ($lastHC <= $heure_creuse && $heure_creuse < $lastHC + 100000) && ($lastHP <= $heure_pleine && $heure_pleine < $lastHP + 100000) 
+   || (time() - $lastEntryTime > 3600) )
 {
   // If measure correspond to a new hour, insert value in database
   if ( $lastHour != $current_hour )
@@ -77,7 +90,7 @@ if ( ($lastHC <= $heure_creuse && $heure_creuse < $lastHC + 100000)
 }
 else
 {
-  echo("Corrupted value: ".$lastHC." ".$heure_creuse." - ".$lastHP." ".$heure_pleine);
+  error_log("MySQL: Corrupted values: lastHC: ".$lastHC." hp: ".$heure_creuse." - lastHP: ".$lastHP." hp:".$heure_pleine, 3, "/var/tmp/EDF-errors.log");
   echo("done");
 }
 // on ferme la connexion
